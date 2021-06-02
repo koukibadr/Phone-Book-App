@@ -17,6 +17,6 @@ class AppModule {
     @Singleton
     @Provides
     fun provideOkHttpClient(@ApplicationContext context: Context): ContactDatabase =
-        ContactDatabase.getInstance(context)
+            ContactDatabase.getInstance(context)
 
 }

@@ -9,8 +9,8 @@ import com.bkapp.phonebook.R
 import com.bkapp.phonebook.data.model.Contact
 
 class ContactListAdapter(
-    private val listOfContact: List<Contact>,
-    private val callback: ((Int) -> Unit)?
+        private val listOfContact: List<Contact>,
+        private val callback: ((Int) -> Unit)?
 ) : RecyclerView.Adapter<ContactListAdapter.ViewHolder>() {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {

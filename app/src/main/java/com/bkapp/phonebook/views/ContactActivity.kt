@@ -33,9 +33,9 @@ class ContactActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityContactsBinding.inflate(layoutInflater)
-         permission = ContextCompat.checkSelfPermission(
-            this,
-            Manifest.permission.READ_CONTACTS
+        permission = ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.READ_CONTACTS
         )
         initView()
         setContentView(binding.root)
@@ -46,7 +46,7 @@ class ContactActivity : AppCompatActivity() {
         checkContactsPermission()
     }
 
-    private fun checkContactsPermission(){
+    private fun checkContactsPermission() {
         if (permission != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(
                     this,
@@ -58,10 +58,10 @@ class ContactActivity : AppCompatActivity() {
         }
     }
 
-    private fun initView(){
-        contactListAdapter = ContactListAdapter(contactList){}
+    private fun initView() {
+        contactListAdapter = ContactListAdapter(contactList) {}
         binding.listContact.adapter = contactListAdapter
-        binding.searchEditext.addTextChangedListener {editable ->
+        binding.searchEditext.addTextChangedListener { editable ->
             homeViewModel.searchContact(editable.toString()).observe(this@ContactActivity, Observer { contacts ->
                 this.contactList.clear()
                 this.contactList.addAll(contacts)
@@ -83,16 +83,16 @@ class ContactActivity : AppCompatActivity() {
     }
 
     override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<out String>,
-        grantResults: IntArray
+            requestCode: Int,
+            permissions: Array<out String>,
+            grantResults: IntArray
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         when (requestCode) {
             GET_CONTACT_REQUEST -> {
                 if (grantResults.isEmpty() || grantResults[0] != PackageManager.PERMISSION_GRANTED) {
                     Toast.makeText(this, "App can't read your phone contact", Toast.LENGTH_SHORT)
-                        .show()
+                            .show()
                 } else {
                     displayContacts()
                 }

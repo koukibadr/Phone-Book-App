@@ -19,11 +19,11 @@ abstract class ContactDatabase : RoomDatabase() {
         fun getInstance(context: Context): ContactDatabase {
             if (instance == null)
                 instance = Room.databaseBuilder(
-                    context.applicationContext, ContactDatabase::class.java,
-                    "contactDatabase"
+                        context.applicationContext, ContactDatabase::class.java,
+                        "contactDatabase"
                 )
-                    .fallbackToDestructiveMigration()
-                    .build()
+                        .fallbackToDestructiveMigration()
+                        .build()
 
             return instance!!
         }
