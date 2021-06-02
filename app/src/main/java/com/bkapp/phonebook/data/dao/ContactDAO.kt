@@ -16,6 +16,12 @@ interface ContactDAO {
     @Delete
     fun deleteContact(contact: Contact)
 
+    @Query("DELETE FROM contact")
+    fun deleteAllContacts()
+
+    @Query("SELECT * FROM contact")
+    fun getAllContacts(): List<Contact>
+
     @Query("SELECT * from contact WHERE lastName LIKE :query")
     fun filterContact(query: String): List<Contact>
 

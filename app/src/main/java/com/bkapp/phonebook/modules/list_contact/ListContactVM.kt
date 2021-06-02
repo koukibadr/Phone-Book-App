@@ -8,61 +8,74 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.liveData
 import com.bkapp.phonebook.data.ContactDatabase
 import com.bkapp.phonebook.data.model.Contact
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.*
 
 class ListContactVM @ViewModelInject constructor(
-    private val contactDatabase: ContactDatabase
+        private val contactDatabase: ContactDatabase
 ) : ViewModel() {
 
-    fun displayContacts(contentResolver: ContentResolver) = liveData(Dispatchers.IO) {
+    suspend fun fetchContacts(contentResolver: ContentResolver) {
         val contactList = mutableListOf<Contact>()
-        val cr = contentResolver
-        val cur: Cursor? = cr.query(
-            ContactsContract.Contacts.CONTENT_URI,
-            null, null, null, null
+        val contactCursor: Cursor? = contentResolver.query(
+                ContactsContract.Contacts.CONTENT_URI,
+                null, null, null, null
         )
-        if (cur != null) {
-            if (cur.count > 0) {
-                while (cur.moveToNext()) {
+        if (contactCursor != null) {
+            if (contactCursor.count > 0) {
+                while (contactCursor.moveToNext()) {
                     val id: String =
-                        cur.getString(cur.getColumnIndex(ContactsContract.Contacts._ID))
+                            contactCursor.getString(contactCursor.getColumnIndex(ContactsContract.Contacts._ID))
                     val name: String =
-                        cur.getString(cur.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME))
-                    if (cur.getString(
-                            cur.getColumnIndex(ContactsContract.Contacts.HAS_PHONE_NUMBER)
-                        ).toInt() > 0
+                            contactCursor.getString(contactCursor.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME))
+                    if (contactCursor.getString(
+                                    contactCursor.getColumnIndex(ContactsContract.Contacts.HAS_PHONE_NUMBER)
+                            ).toInt() > 0
                     ) {
-                        val pCur: Cursor? = cr.query(
-                            ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
-                            null,
-                            ContactsContract.CommonDataKinds.Phone.CONTACT_ID + " = ?",
-                            arrayOf(id),
-                            null
+                        val contactItemsCursor: Cursor? = contentResolver.query(
+                                ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
+                                null,
+                                ContactsContract.CommonDataKinds.Phone.CONTACT_ID + " = ?",
+                                arrayOf(id),
+                                null
                         )
-                        if (pCur != null) {
-                            while (pCur.moveToNext()) {
-                                val phoneNo: String =
-                                    pCur.getString(pCur.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER))
-                                val email: String =
-                                    pCur.getString(pCur.getColumnIndex(ContactsContract.CommonDataKinds.Email.DISPLAY_NAME))
+                        if (contactItemsCursor != null) {
+                            while (contactItemsCursor.moveToNext()) {
+                                val phoneNo: String = contactItemsCursor.getString(contactItemsCursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER))
                                 contactList.add(
-                                    Contact(
-                                        name = name,
-                                        lastName = "",
-                                        mailAddress = email,
-                                        phoneNumber = phoneNo,
-                                        id = null
-                                    )
+                                        Contact(
+                                                name = name,
+                                                lastName = "",
+                                                mailAddress = "",
+                                                phoneNumber = phoneNo,
+                                                id = null
+                                        )
                                 )
                             }
-                            pCur.close()
+                            contactItemsCursor.close()
                         }
                     }
                 }
             }
-            cur.close()
+            contactCursor.close()
         }
-        emit(contactList)
+        saveContactsToDatabase(contactList)
+    }
+
+
+    private suspend fun saveContactsToDatabase(contacts: List<Contact>) {
+        val contactsDeletion = GlobalScope.async {
+            withContext(Dispatchers.IO) {
+                contactDatabase.contactDao().deleteAllContacts()
+            }
+        }
+        contactsDeletion.await()
+        CoroutineScope(Dispatchers.IO).launch {
+            contactDatabase.contactDao().insertAllContacts(contacts)
+        }
+    }
+
+    fun getAllContacts() = liveData(Dispatchers.IO) {
+        emit(contactDatabase.contactDao().getAllContacts())
     }
 
 }
