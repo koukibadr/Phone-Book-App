@@ -66,4 +66,7 @@ dependencies {
     kapt "androidx.lifecycle:lifecycle-common-java8:$lifecycle_version"
     implementation "androidx.room:room-runtime:$room_version"
     kapt "androidx.room:room-compiler:$room_version"
+
+    //Responsive sizes lib
+    implementation 'com.intuit.sdp:sdp-android:1.0.6'
 }
