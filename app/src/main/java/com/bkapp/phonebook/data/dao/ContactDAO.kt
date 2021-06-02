@@ -22,7 +22,7 @@ interface ContactDAO {
     @Query("SELECT * FROM contact")
     fun getAllContacts(): List<Contact>
 
-    @Query("SELECT * from contact WHERE lastName LIKE :query")
+    @Query("SELECT * from contact WHERE lastName LIKE :query OR name LIKE :query OR phoneNumber LIKE :query")
     fun filterContact(query: String): List<Contact>
 
 }

@@ -78,4 +78,8 @@ class ListContactVM @ViewModelInject constructor(
         emit(contactDatabase.contactDao().getAllContacts())
     }
 
+    fun searchContact(query: String) = liveData(Dispatchers.IO) {
+        emit(contactDatabase.contactDao().filterContact("%$query%"))
+    }
+
 }

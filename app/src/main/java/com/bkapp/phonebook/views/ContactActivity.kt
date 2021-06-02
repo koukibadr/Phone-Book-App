@@ -8,7 +8,10 @@ import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.core.widget.addTextChangedListener
+import androidx.core.widget.doOnTextChanged
 import androidx.lifecycle.Observer
+import com.bkapp.phonebook.data.model.Contact
 import com.bkapp.phonebook.databinding.ActivityContactsBinding
 import com.bkapp.phonebook.modules.list_contact.ListContactVM
 import dagger.hilt.android.AndroidEntryPoint
@@ -24,6 +27,8 @@ class ContactActivity : AppCompatActivity() {
     private val homeViewModel by viewModels<ListContactVM>()
     private lateinit var binding: ActivityContactsBinding
     private var permission: Int = 0
+    private var contactList: MutableList<Contact> = mutableListOf()
+    lateinit var contactListAdapter: ContactListAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -32,6 +37,7 @@ class ContactActivity : AppCompatActivity() {
             this,
             Manifest.permission.READ_CONTACTS
         )
+        initView()
         setContentView(binding.root)
     }
 
@@ -52,13 +58,27 @@ class ContactActivity : AppCompatActivity() {
         }
     }
 
+    private fun initView(){
+        contactListAdapter = ContactListAdapter(contactList){}
+        binding.listContact.adapter = contactListAdapter
+        binding.searchEditext.addTextChangedListener {editable ->
+            homeViewModel.searchContact(editable.toString()).observe(this@ContactActivity, Observer { contacts ->
+                this.contactList.clear()
+                this.contactList.addAll(contacts)
+                contactListAdapter.notifyDataSetChanged()
+            })
+        }
+    }
+
 
     private fun displayContacts() {
         CoroutineScope(Dispatchers.Main).launch {
             homeViewModel.fetchContacts(contentResolver)
         }
         homeViewModel.getAllContacts().observe(this@ContactActivity, Observer { contacts ->
-            binding.listContact.adapter = ContactListAdapter(contacts) {}
+            this.contactList.clear()
+            this.contactList.addAll(contacts)
+            contactListAdapter.notifyDataSetChanged()
         })
     }
 
