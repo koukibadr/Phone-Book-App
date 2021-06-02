@@ -2,98 +2,72 @@ package com.bkapp.phonebook.views
 
 import android.Manifest
 import android.content.pm.PackageManager
-import android.database.Cursor
+import android.os.Binder
 import android.os.Bundle
-import android.provider.ContactsContract
 import android.widget.Toast
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import com.bkapp.phonebook.R
+import androidx.lifecycle.Observer
+import com.bkapp.phonebook.databinding.ActivityContactsBinding
+import com.bkapp.phonebook.modules.list_contact.ListContactVM
 import dagger.hilt.android.AndroidEntryPoint
 
 
 @AndroidEntryPoint
 class ContactActivity : AppCompatActivity() {
-    private val RECORD_REQUEST_CODE = 101
+
+    private val GET_CONTACT_REQUEST = 101
+    private val homeViewModel by viewModels<ListContactVM>()
+    private lateinit var binding: ActivityContactsBinding
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_contacts)
+        binding = ActivityContactsBinding.inflate(layoutInflater)
         val permission = ContextCompat.checkSelfPermission(
-                this,
-                Manifest.permission.READ_CONTACTS
+            this,
+            Manifest.permission.READ_CONTACTS
         )
 
         if (permission != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(
-                    this,
-                    arrayOf(Manifest.permission.READ_CONTACTS),
-                    RECORD_REQUEST_CODE
+                this,
+                arrayOf(Manifest.permission.READ_CONTACTS),
+                GET_CONTACT_REQUEST
             )
         } else {
             displayContacts()
         }
+        setContentView(binding.root)
+    }
+
+    private fun displayContacts() {
+        homeViewModel.displayContacts(contentResolver).observe(this, Observer { contacts ->
+            contacts.sortBy {
+                it.name
+            }
+            binding.listContact.adapter = ContactListAdapter(contacts) {
+
+            }
+        })
     }
 
     override fun onRequestPermissionsResult(
-            requestCode: Int,
-            permissions: Array<out String>,
-            grantResults: IntArray
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         when (requestCode) {
-            RECORD_REQUEST_CODE -> {
+            GET_CONTACT_REQUEST -> {
                 if (grantResults.isEmpty() || grantResults[0] != PackageManager.PERMISSION_GRANTED) {
                     Toast.makeText(this, "App can't read your phone contact", Toast.LENGTH_SHORT)
-                            .show()
+                        .show()
                 } else {
                     displayContacts()
                 }
             }
         }
-    }
-
-    private fun displayContacts() {
-        val cr = contentResolver
-        val cur: Cursor? = cr.query(
-                ContactsContract.Contacts.CONTENT_URI,
-                null, null, null, null
-        )
-        if (cur != null) {
-            if (cur.count > 0) {
-                while (cur.moveToNext()) {
-                    val id: String =
-                            cur.getString(cur.getColumnIndex(ContactsContract.Contacts._ID))
-                    val name: String =
-                            cur.getString(cur.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME))
-                    if (cur.getString(
-                                    cur.getColumnIndex(ContactsContract.Contacts.HAS_PHONE_NUMBER)
-                            ).toInt() > 0
-                    ) {
-                        val pCur: Cursor? = cr.query(
-                                ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
-                                null,
-                                ContactsContract.CommonDataKinds.Phone.CONTACT_ID + " = ?",
-                                arrayOf(id),
-                                null
-                        )
-                        if (pCur != null) {
-                            while (pCur.moveToNext()) {
-                                val phoneNo: String =
-                                        pCur.getString(pCur.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER))
-                                Toast.makeText(
-                                        applicationContext,
-                                        "me: $name, Phone No: $phoneNo",
-                                        Toast.LENGTH_SHORT
-                                ).show()
-                            }
-                            pCur.close()
-                        }
-                    }
-                }
-            }
-            cur.close()
-        }
-
     }
 }

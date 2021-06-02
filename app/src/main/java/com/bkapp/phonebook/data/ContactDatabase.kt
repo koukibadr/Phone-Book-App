@@ -7,7 +7,7 @@ import androidx.room.RoomDatabase
 import com.bkapp.phonebook.data.dao.ContactDAO
 import com.bkapp.phonebook.data.model.Contact
 
-@Database(entities = [Contact::class], version = 1)
+@Database(entities = [Contact::class], version = 2)
 abstract class ContactDatabase : RoomDatabase() {
 
     abstract fun contactDao(): ContactDAO
