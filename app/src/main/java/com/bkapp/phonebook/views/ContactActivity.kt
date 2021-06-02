@@ -9,9 +9,6 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.widget.addTextChangedListener
-import androidx.core.widget.doOnTextChanged
-import androidx.lifecycle.Observer
-import com.bkapp.phonebook.data.model.Contact
 import com.bkapp.phonebook.databinding.ActivityContactsBinding
 import com.bkapp.phonebook.modules.list_contact.ListContactVM
 import dagger.hilt.android.AndroidEntryPoint
@@ -19,16 +16,14 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
+const val GET_CONTACT_REQUEST = 101
 
 @AndroidEntryPoint
 class ContactActivity : AppCompatActivity() {
 
-    private val GET_CONTACT_REQUEST = 101
-    private val homeViewModel by viewModels<ListContactVM>()
+    private val listContactVM by viewModels<ListContactVM>()
     private lateinit var binding: ActivityContactsBinding
     private var permission: Int = 0
-    private var contactList: MutableList<Contact> = mutableListOf()
-    lateinit var contactListAdapter: ContactListAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -46,6 +41,12 @@ class ContactActivity : AppCompatActivity() {
         checkContactsPermission()
     }
 
+
+    /**
+     * check if the permission [Manifest.permission.READ_CONTACTS] is granted or not
+     * if it's not granted a request popup will be shown otherwise the app will extract the
+     * contact lists
+     */
     private fun checkContactsPermission() {
         if (permission != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(
@@ -58,28 +59,27 @@ class ContactActivity : AppCompatActivity() {
         }
     }
 
+
+    /**
+     * initialize the screen components by setting the adapter to recycler view
+     * and setting up the text changed listener on the search field
+     */
     private fun initView() {
-        contactListAdapter = ContactListAdapter(contactList) {}
-        binding.listContact.adapter = contactListAdapter
+        binding.listContact.adapter =  listContactVM.contactListAdapter
         binding.searchEditext.addTextChangedListener { editable ->
-            homeViewModel.searchContact(editable.toString()).observe(this@ContactActivity, Observer { contacts ->
-                this.contactList.clear()
-                this.contactList.addAll(contacts)
-                contactListAdapter.notifyDataSetChanged()
-            })
+            listContactVM.searchContact(this,editable.toString())
         }
     }
 
 
+    /**
+     * fetch all contacts from the content provider and display the result in the recycler view
+     */
     private fun displayContacts() {
         CoroutineScope(Dispatchers.Main).launch {
-            homeViewModel.fetchContacts(contentResolver)
+            listContactVM.fetchContacts(contentResolver)
         }
-        homeViewModel.getAllContacts().observe(this@ContactActivity, Observer { contacts ->
-            this.contactList.clear()
-            this.contactList.addAll(contacts)
-            contactListAdapter.notifyDataSetChanged()
-        })
+        listContactVM.getAllContacts(this)
     }
 
     override fun onRequestPermissionsResult(

@@ -1,5 +1,6 @@
 package com.bkapp.phonebook.data.dao
 
+import androidx.lifecycle.LiveData
 import androidx.room.*
 import com.bkapp.phonebook.data.model.Contact
 
@@ -20,9 +21,9 @@ interface ContactDAO {
     fun deleteAllContacts()
 
     @Query("SELECT * FROM contact")
-    fun getAllContacts(): List<Contact>
+    fun getAllContacts(): LiveData<List<Contact>>
 
     @Query("SELECT * from contact WHERE lastName LIKE :query OR name LIKE :query OR phoneNumber LIKE :query")
-    fun filterContact(query: String): List<Contact>
+    fun filterContact(query: String): LiveData<List<Contact>>
 
 }
